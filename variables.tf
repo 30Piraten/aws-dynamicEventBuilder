@@ -24,7 +24,7 @@ variable "filter_name_one" {
 }
 
 variable "filter_values_two" {
-  type = string
+  type = list(string)
   default =["hvm"]
   description = "value" 
 }
@@ -58,6 +58,19 @@ variable "engine_version" {
   type = string 
   default = "8.0.0"
   description = "Engine version for the database instance"
+}
+
+variable "db_subnet_name" {
+  type = string 
+  default = "dbSubnet"
+  description = "Name of the database subnet"
+}
+
+variable "db_subnet_tags" {
+  type = map(string)
+  default = {
+    Name = "DBSubnetGroup"
+  }
 }
 
 variable "allocated_storage" {
@@ -147,3 +160,23 @@ variable "aws_subnet_private_availability_zone" {
   default = "us-east-1b"
   description = "Availability zone for the private subnet"
 }
+
+// S3 VARIABLE DECLARATION 
+variable "bucket" {
+  type = string 
+  default = "myS3Bucket"
+  description = "Name of the S3 bucket created"
+}
+
+variable "bucket_tags" {
+  type = map(string)
+  default = {
+    "name" : "my-dev-env-bucket"
+    "Environment" = "dev"
+  }
+}
+
+// LAMBDA VARIABLE DECLARATION 
+
+
+// API GATEWAY VARIABLE DECLARATION
