@@ -1,0 +1,6 @@
+variable "region" {
+  description = "AWS region"
+  default     = "us-east-1"
+}
+
+# Add more variables as needed
