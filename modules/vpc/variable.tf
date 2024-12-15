@@ -1,30 +1,38 @@
 variable "aws_vpc_cidr_block" {
-  type = string 
+  type = string
 }
 
 variable "instance_tenancy" {
-  type = string 
+  type = string
 }
 
 variable "tags" {
-  type = map(string) 
+  type = map(string)
 }
 
 variable "aws_subnet_public_cidr_block" {
-  type = string 
+  type = string
 }
 variable "aws_subnet_public_availability_zone" {
-  type = string 
+  type = string
 }
 
 variable "map_public_ip_on_launch" {
-  type = bool 
+  type = bool
 }
 
 variable "aws_subnet_private_cidr_block" {
-  type = string 
+  type = string
 }
 
 variable "aws_subnet_private_availability_zone" {
-  type = string 
+  type = string
+}
+
+variable "db_subnet_name" {
+  type = string
+}
+
+variable "db_subnet_tags" {
+  type = map(string)
 }
