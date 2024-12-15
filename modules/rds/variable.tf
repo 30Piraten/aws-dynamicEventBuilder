@@ -1,43 +1,36 @@
 variable "db_name" {
-  type = string 
+  type = string
 }
 
 variable "engine" {
-  type = string 
+  type = string
 }
 
 variable "engine_version" {
-  type = string 
+  type = string
 }
 
 variable "allocated_storage" {
-  type = string 
+  type = string
 }
 
 variable "instance_class" {
-  type = string 
+  type = string
 }
 
 variable "parameter_group_name" {
-  type = string 
+  type = string
 }
 
 variable "skip_final_snapshot" {
-  type = bool 
+  type = bool
 }
 
 variable "multi_az" {
-  type = bool 
+  type = bool
 }
 
 variable "publicly_accessible" {
-  type = bool 
+  type = bool
 }
 
-variable "db_subnet_name" {
-  type = string 
-}
-
-variable "db_subnet_tags" {
-  type = map(string)
-}
