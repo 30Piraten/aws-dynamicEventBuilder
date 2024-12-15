@@ -32,7 +32,7 @@ data "aws_iam_policy_document" "cloudwatch" {
       "logs:GetLogEvents",
       "logs:FilterLogEvents",
     ]
-    // This needs to be modified and restricted
+    // TODO: This needs to be modified and restricted
     resources = ["*"]
   }
 }
