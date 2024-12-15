@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "bucket" {
-    bucket = var.bucket 
+  bucket = var.bucket
 
-    tags = var.bucket_tags 
+  tags = var.bucket_tags
 }

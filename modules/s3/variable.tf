@@ -1,5 +1,5 @@
 variable "bucket" {
-  type = string 
+  type = string
 }
 
 variable "bucket_tags" {
