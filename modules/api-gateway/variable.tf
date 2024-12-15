@@ -1,0 +1,3 @@
+variable "uri" {
+  type = string
+}
