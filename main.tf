@@ -38,10 +38,10 @@ module "rds" {
 
 module "lambda" {
   source     = "./modules/lambda"
-  source_arn = module.api_gateway.api_gateway_execution_arn
+  # source_arn = module.api_gateway.api_gateway_execution_arn
 }
 
 module "api_gateway" {
   source = "./modules/api-gateway"
-  uri    = module.lambda.aws_lambda_function.invoke_arn
+  # uri    = module.lambda.aws_lambda_function.invoke_arn
 }
