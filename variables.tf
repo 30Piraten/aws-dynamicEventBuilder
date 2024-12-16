@@ -179,13 +179,13 @@ variable "bucket_tags" {
 }
 
 // LAMBDA VARIABLE DECLARATION 
-variable "source_arn" {
-  type        = string
-  description = "Amazon resource name source for AWS Lambda permission"
-}
+# variable "source_arn" {
+#   type        = string
+#   description = "Amazon resource name source for AWS Lambda permission"
+# }
 
 // API GATEWAY VARIABLE DECLARATION
-variable "uri" {
-  type        = string
-  description = "URI for the API Gateway"
-}
+# variable "uri" {
+#   type        = string
+#   description = "URI for the API Gateway"
+# }
