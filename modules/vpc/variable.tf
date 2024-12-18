@@ -6,10 +6,6 @@ variable "instance_tenancy" {
   type = string
 }
 
-variable "tags" {
-  type = map(string)
-}
-
 variable "aws_subnet_public_cidr_block" {
   type = string
 }
