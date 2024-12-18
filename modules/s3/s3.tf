@@ -18,7 +18,6 @@ terraform {
 resource "aws_s3_bucket" "bucket" {
   bucket = var.bucket
 
-  # tags = var.bucket_tags
   tags = {
     Name = "S3_bucket"
     TTL = timeadd(timestamp(), "${ttl_expiry}m")
