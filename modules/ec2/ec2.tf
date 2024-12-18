@@ -1,3 +1,7 @@
+locals {
+  ttl_expiry = 3
+}
+
 data "aws_ami" "ubuntu" {
   most_recent = true
 
@@ -18,5 +22,6 @@ resource "aws_instance" "vm" {
 
   tags = {
     name = var.tag_name
+    TTL = timeadd(timestamp(), "${local.ttl_expiry}m")
   }
 }
