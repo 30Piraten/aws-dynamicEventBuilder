@@ -1,6 +1,5 @@
 module "vpc" {
   source                               = "./modules/vpc"
-  tags                                 = var.tags
   instance_tenancy                     = var.instance_tenancy
   aws_vpc_cidr_block                   = var.aws_vpc_cidr_block
   map_public_ip_on_launch              = var.map_public_ip_on_launch
@@ -38,10 +37,8 @@ module "rds" {
 
 module "lambda" {
   source     = "./modules/lambda"
-  # source_arn = module.api_gateway.api_gateway_execution_arn
 }
 
 module "api_gateway" {
   source = "./modules/api-gateway"
-  # uri    = module.lambda.aws_lambda_function.invoke_arn
 }
