@@ -59,7 +59,7 @@ locals {
 resource "aws_lambda_function" "cleanupenv" {
   function_name = local.lambda_functions["cleanupenv"].name 
   role          = aws_iam_role.lambda_exec.arn
-  runtime       = "go1.x"
+  runtime       =  "provided.al2"  //"go1.x"
   handler       = "main"
   filename      = local.lambda_functions["cleanupenv"].filepath
   depends_on    = [null_resource.build_lambdas]
@@ -68,7 +68,7 @@ resource "aws_lambda_function" "cleanupenv" {
 resource "aws_lambda_function" "provisionenv" {
   function_name = local.lambda_functions["provisionenv"].name
   role          = aws_iam_role.lambda_exec.arn
-  runtime       = "go1.x"
+  runtime       =  "provided.al2" //"go1.x"
   handler       = "main"
   filename      = local.lambda_functions["provisionenv"].filepath
   depends_on    = [null_resource.build_lambdas]
