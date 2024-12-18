@@ -56,11 +56,9 @@ variable "engine" {
 
 variable "engine_version" {
   type        = string
-  default     = "8.0.0"
+  default     = "8.0.39"
   description = "Engine version for the database instance"
 }
-
-
 
 variable "allocated_storage" {
   type        = string
@@ -102,7 +100,7 @@ variable "multi_az" {
 // VPC VARIABLE DECLARATION
 variable "aws_vpc_cidr_block" {
   type        = string
-  default     = "10.0.0.1/16"
+  default     = "10.0.0.0/16"
   description = "Cidr block for the VPC network"
 }
 
@@ -110,14 +108,6 @@ variable "instance_tenancy" {
   type        = string
   default     = "default"
   description = "Instance tenancy"
-}
-
-variable "tags" {
-  type = map(string)
-  default = {
-    "name" = "main"
-  }
-  description = "Tags for the VPC network"
 }
 
 variable "aws_subnet_public_cidr_block" {
@@ -152,7 +142,7 @@ variable "aws_subnet_private_availability_zone" {
 
 variable "db_subnet_name" {
   type        = string
-  default     = "dbSubnet"
+  default     = "dbsubnet"
   description = "Name of the database subnet"
 }
 
@@ -166,26 +156,23 @@ variable "db_subnet_tags" {
 // S3 VARIABLE DECLARATION 
 variable "bucket" {
   type        = string
-  default     = "myS3Bucket"
+  default     = "terraform-state-bucket"
   description = "Name of the S3 bucket created"
 }
 
-variable "bucket_tags" {
-  type = map(string)
-  default = {
-    "name" : "my-dev-env-bucket"
-    "Environment" = "dev"
-  }
+variable "key" {
+  type = string 
+  default = "provisionenv/terraform.tfstate"
+  description = "S3 bucket key"
+}
+
+variable "dynamodb_table" {
+  type = string
+  default = "terraform-lock"
+  description = "Dynamo table for the S3"
 }
 
 // LAMBDA VARIABLE DECLARATION 
-# variable "source_arn" {
-#   type        = string
-#   description = "Amazon resource name source for AWS Lambda permission"
-# }
+
 
 // API GATEWAY VARIABLE DECLARATION
-# variable "uri" {
-#   type        = string
-#   description = "URI for the API Gateway"
-# }
