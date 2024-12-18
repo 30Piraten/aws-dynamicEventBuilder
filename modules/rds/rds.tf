@@ -1,3 +1,7 @@
+locals {
+  ttl_expiry = 3
+}
+
 resource "aws_db_instance" "db_sql" {
 
   db_name              = var.db_name
@@ -11,5 +15,9 @@ resource "aws_db_instance" "db_sql" {
   publicly_accessible  = var.publicly_accessible
 
   username = "r3ev"
-  password = "root"
+  password = "root9090909"
+
+  tags = {
+    TTL = timeadd(timestamp(), "${local.ttl_expiry}m")
+  }
 }
