@@ -1,9 +1,16 @@
+locals {
+  ttl_expiry = 3
+}
+
 resource "aws_vpc" "vpc" {
   cidr_block = var.aws_vpc_cidr_block
 
   instance_tenancy = var.instance_tenancy
 
-  tags = var.tags
+  tags = {
+    Name = "main"
+    TTL = timeadd(timestamp(), "${local.ttl_expiry}m")
+  }
 }
 
 resource "aws_subnet" "public" {
