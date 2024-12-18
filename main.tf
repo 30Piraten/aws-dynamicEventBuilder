@@ -35,6 +35,14 @@ module "rds" {
   parameter_group_name = var.parameter_group_name
 }
 
+module "s3" {
+  source = "./modules/s3"
+  key = var.key
+  region = var.region
+  bucket = var.bucket
+  dynamodb_table = var.dynamodb_table
+}
+
 module "lambda" {
   source     = "./modules/lambda"
 }
