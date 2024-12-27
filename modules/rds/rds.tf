@@ -1,7 +1,3 @@
-locals {
-  ttl_expiry = 3
-}
-
 resource "aws_db_instance" "db_sql" {
 
   db_name              = var.db_name
@@ -18,6 +14,7 @@ resource "aws_db_instance" "db_sql" {
   password = "root9090909"
 
   tags = {
-    TTL = timeadd(timestamp(), "${local.ttl_expiry}m")
+    Environment = var.environment
+    TTL = var.ttl_expiry_time
   }
 }

@@ -1,3 +1,3 @@
-# output "aws_lambda_function" {
-#   value = aws_lambda_function.lambda_func
-# }
+output "cleanup_api_url" {
+  value = aws_apigatewayv2_api.cleanup_api.api_endpoint
+}

@@ -21,3 +21,11 @@ variable "filter_name_two" {
 variable "tag_name" {
   type = string
 }
+
+variable "environment" {
+  type = string
+}
+
+variable "ttl_expiry_time" {
+  type = number
+}

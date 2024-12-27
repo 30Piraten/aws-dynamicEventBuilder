@@ -1,8 +1,3 @@
-locals {
-  ttl_expiry = 3
-}
-
-
 // State locking with DynamoDB to prevent 
 // conflicts when Lambda triggers Terraform
 terraform {
@@ -20,6 +15,7 @@ resource "aws_s3_bucket" "bucket" {
 
   tags = {
     Name = "S3_bucket"
-    TTL = timeadd(timestamp(), "${ttl_expiry}m")
+    TTL = var.ttl_expiry_time
+    Environment = var.environment
   }
 }

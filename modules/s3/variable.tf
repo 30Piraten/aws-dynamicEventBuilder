@@ -13,3 +13,13 @@ variable "key" {
 variable "dynamodb_table" {
   type = string 
 }
+
+variable "ttl_expiry_time" {
+  type = number
+  
+}
+
+variable "environment" {
+  type = string 
+  
+}

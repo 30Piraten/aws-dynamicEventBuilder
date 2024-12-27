@@ -1,7 +1,3 @@
-locals {
-  ttl_expiry = 3
-}
-
 resource "aws_vpc" "vpc" {
   cidr_block = var.aws_vpc_cidr_block
 
@@ -9,7 +5,8 @@ resource "aws_vpc" "vpc" {
 
   tags = {
     Name = "main"
-    TTL = timeadd(timestamp(), "${local.ttl_expiry}m")
+    TTL = var.ttl_expiry_time
+    Environment = var.environment
   }
 }
 

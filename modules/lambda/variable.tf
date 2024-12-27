@@ -1,3 +1,7 @@
-# variable "source_arn" {
-#   type = string
-# }
+variable "environment_tag" {
+  type = string 
+}
+
+variable "table_name" {
+  type = string
+}

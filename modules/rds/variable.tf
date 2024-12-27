@@ -34,3 +34,12 @@ variable "publicly_accessible" {
   type = bool
 }
 
+variable "ttl_expiry_time" {
+  type = number 
+  
+}
+
+variable "environment" {
+  type = string
+  
+}

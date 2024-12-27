@@ -32,3 +32,13 @@ variable "db_subnet_name" {
 variable "db_subnet_tags" {
   type = map(string)
 }
+
+variable "ttl_expiry_time" {
+  type = number 
+  
+}
+
+variable "environment" {
+  type = string 
+  
+}
