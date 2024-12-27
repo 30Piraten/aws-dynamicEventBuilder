@@ -19,7 +19,7 @@ func HandleRequest(ctx context.Context) (string, error) {
 		InstanceType: aws.String("t2.micro"),
 		MinCount:     aws.Int64(1),
 		MaxCount:     aws.Int64(1),
-	}
+	}0 
 
 	_, err := svc.RunInstances(input)
 	if err != nil {
