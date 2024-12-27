@@ -3,7 +3,32 @@ variable "region" {
   default     = "us-east-1"
 }
 
-# Add more variables as needed
+variable "ttl_expiry_time" {
+  type        = number
+  description = "ttl expiry time"
+}
+
+variable "environment" {
+  description = "Environment name (e.g., dev, test, prod)"
+  type        = string
+  default     = "dev"
+}
+
+# DYANAMODB VARIABLE DECLARATION 
+variable "tags" {
+  description = "Tags to apply to all resources."
+  type        = map(string)
+  default = {
+    Owner   = "cloud-team"
+    Project = "env-manager"
+  }
+}
+
+variable "ttl_hours" {
+  description = "Time-to-live in hours for resources."
+  type        = number
+  default     = 24 # Default to 24 hours
+}
 
 # EC2 VARIABLE DECLARATION
 variable "instance_type" {
@@ -161,18 +186,28 @@ variable "bucket" {
 }
 
 variable "key" {
-  type = string 
-  default = "provisionenv/terraform.tfstate"
+  type        = string
+  default     = "provisionenv/terraform.tfstate"
   description = "S3 bucket key"
 }
 
 variable "dynamodb_table" {
-  type = string
-  default = "terraform-lock"
+  type        = string
+  default     = "terraform-lock"
   description = "Dynamo table for the S3"
 }
 
 // LAMBDA VARIABLE DECLARATION 
+variable "environment_tag" {
+  type        = string
+  default     = "dev"
+  description = "Environment name (e.g., dev, test, prod)"
+}
 
+variable "table_name" {
+  type        = string
+  description = "Table name for DynamoDB"
+
+}
 
 // API GATEWAY VARIABLE DECLARATION
