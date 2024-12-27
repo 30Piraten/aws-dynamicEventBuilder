@@ -9,6 +9,8 @@ module "vpc" {
   aws_subnet_private_availability_zone = var.aws_subnet_private_availability_zone
   db_subnet_name                       = var.db_subnet_name
   db_subnet_tags                       = var.db_subnet_tags
+  ttl_expiry_time                      = module.dynamodb.ttl_expiry_time
+  environment                          = var.environment
 
 }
 
@@ -20,6 +22,8 @@ module "ec2" {
   filter_values_one = var.filter_values_one
   filter_values_two = var.filter_values_two
   instance_type     = var.instance_type
+  environment       = var.environment
+  ttl_expiry_time   = module.dynamodb.ttl_expiry_time
 }
 
 module "rds" {
@@ -33,20 +37,33 @@ module "rds" {
   skip_final_snapshot  = var.skip_final_snapshot
   publicly_accessible  = var.publicly_accessible
   parameter_group_name = var.parameter_group_name
+  ttl_expiry_time      = module.dynamodb.ttl_expiry_time
+  environment          = var.environment
 }
 
 module "s3" {
-  source = "./modules/s3"
-  key = var.key
-  region = var.region
-  bucket = var.bucket
-  dynamodb_table = var.dynamodb_table
+  source          = "./modules/s3"
+  key             = var.key
+  region          = var.region
+  bucket          = var.bucket
+  dynamodb_table  = var.dynamodb_table
+  ttl_expiry_time = module.dynamodb.ttl_expiry_time
+  environment     = var.environment
 }
 
 module "lambda" {
-  source     = "./modules/lambda"
+  source          = "./modules/lambda"
+  environment_tag = var.environment
+  table_name      = module.dynamodb.aws_dynamodb_table
 }
 
 module "api_gateway" {
   source = "./modules/api-gateway"
+}
+
+module "dynamodb" {
+  source      = "./modules/dynamodb"
+  ttl_hours   = var.ttl_hours
+  tags        = var.tags
+  environment = var.environment
 }
