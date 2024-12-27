@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
 // Explanation: This Lambda function scans the DynamoDB table for expired resources and destroys them using Terraform.
@@ -36,18 +37,23 @@ func HandleCleanUpRequest(ctx context.Context) (string, error) {
 	}
 
 	for _, item := range result.Items {
-		env := item["EnvironmentName"].S
-		ttl, err := strconv.ParseInt(*item["TTL"].N, 10, 64)
-		if err != nil || time.Now().Unix() > ttl {
-			log.Printf("Cleaning up expired environment: %s", env)
-			cleanupEnvironment(*environment)
+		environment := item["EnvironmentName"].(*types.AttributeValueMemberS).Value
+		switch v := item["TTL"].(type) {
+		case *types.AttributeValueMemberN:
+			ttl, err := strconv.ParseInt(v.Value, 10, 64)
+			if err != nil || time.Now().Unix() > ttl {
+				log.Printf("Cleaning up expired environment: %s", environment)
+				cleanupEnvironment(environment)
+			}
+		default:
+			log.Printf("Unexpected type for TTL attribute: %T", v)
 		}
 	}
 
 	return "Environment cleanup completed", nil
 }
 
-func cleanupEnvironment(environment string) {
+func cleanupEnvironment(env string) {
 	// Logic to destroy the environment using Terraform
 	cmd := exec.Command("terraform", "destroy", "-var", "environment="+env, "-auto-approve")
 
@@ -55,6 +61,6 @@ func cleanupEnvironment(environment string) {
 	cmd.Dir = os.Getenv("TERRAFORM_DIR")
 
 	if err := cmd.Run(); err != nil {
-		log.Fatalf("failed to destroy environment %s: %v", environment, err)
+		log.Fatalf("failed to destroy environment %s: %v", env, err)
 	}
 }
