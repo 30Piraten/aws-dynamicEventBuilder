@@ -14,7 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
-// Explanation: This Lambda function scans the DynamoDB table for expired resources and destroys them using Terraform.
+// HandleCleanUpRequest scans the DynamoDB table for expired resources and destroys them using Terraform.
 func HandleCleanUpRequest(ctx context.Context) (string, error) {
 	// Logic to clean up environments, e.g., terminate AWS resources (EC2, VPC, S3, RDS, etc) instances based on TTL
 	config, err := config.LoadDefaultConfig(ctx)
