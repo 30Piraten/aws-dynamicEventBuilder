@@ -7,118 +7,151 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 )
 
-// Two important resources for the termination
-// of AWS resources defined / provisioned by
-// Terraform. Resources can be deleted by their
-// Expiry time (TTL -> time to live), and also thier
-// environment.
-type Resource struct {
-	// Environment (e.g., dev, staging, prod)
-	Environment string `json:"environment"`
-	// Expiry timestamp
-	TTL int64 `json:"ttl"`
+// StateEntry represents the DynamoDB record for tracking provisioned environments
+type StateEntry struct {
+	ID             string            `json:"id"`              // Unique identifier for the provision request
+	Environment    string            `json:"environment"`     // Environment name (dev/staging/prod)
+	Region         string            `json:"region"`          // AWS region
+	Resources      string            `json:"resources"`       // JSON string of provisioned resources
+	Status         string            `json:"status"`          // Current status of provisioning
+	CreatedAt      time.Time         `json:"created_at"`      // Creation timestamp
+	ExpiresAt      time.Time         `json:"expires_at"`      // Expiration timestamp
+	TTL            int64             `json:"ttl"`             // Time-to-live in Unix timestamp
+	Tags           map[string]string `json:"tags,omitempty"`  // Resource tags
+	TerraformState string            `json:"terraform_state"` // Terraform state file content
 }
 
-// initHandler is the entry point for the cleanup Lambda
-func InitHandler(ctx context.Context) (string, error) {
-	// Load AWS configuration
-	config, err := config.LoadDefaultConfig(ctx)
+// DynamoDB client initialization
+var dynamoClient *dynamodb.DynamoDB
+
+func init() {
+	sess := session.Must(session.NewSession())
+	dynamoClient = dynamodb.New(sess)
+}
+
+// HandleCleanupRequest handles cleanup of expired resources
+func HandleCleanupRequest(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	log.Println("Starting cleanup of expired resources")
+
+	// Query DynamoDB for expired entries
+	expiredEntries, err := queryExpiredEntries()
 	if err != nil {
-		log.Fatalf("Unable to load AWS configuration, %v", err)
+		return createErrorResponse(500, "Failed to query expired entries", err)
 	}
 
-	// Create DynamoDB client
-	dynamoClient := dynamodb.NewFromConfig(config)
-
-	// Query DynamoDB resources
-	expiredResources, err := queryExpiredResources(ctx, dynamoClient)
-	if err != nil {
-		log.Fatalf("Error querying expired resources: %v", err)
-	}
-
-	// Destroy expired resources
-	for _, resource := range expiredResources {
-		err := destroyResources(resource.Environment)
-		if err != nil {
-			log.Printf("Error destroying resources for %s: %v", resource.Environment, err)
-		} else {
-			// TODO: invalid type!
-			log.Printf("Successfully destroyed resources for %s", resource.Environment)
+	// Process each expired entry
+	for _, entry := range expiredEntries {
+		if err := cleanupResources(entry.ID); err != nil {
+			log.Printf("Failed to cleanup resources for ID %s: %v", entry.ID, err)
+			continue
 		}
+		log.Printf("Successfully cleaned up resources for ID %s", entry.ID)
 	}
 
-	return "Environment cleanup completed", nil
+	return events.APIGatewayProxyResponse{
+		StatusCode: 200,
+		Body:       fmt.Sprintf(`{"success": true, "cleaned_up": %d}`, len(expiredEntries)),
+		Headers:    map[string]string{"Content-Type": "application/json"},
+	}, nil
 }
 
-// queryExpiredResources fetches expired resources from DynamoDB
-func queryExpiredResources(ctx context.Context, dbClient *dynamodb.Client) ([]Resource, error) {
-	tableName := os.Getenv("DYNAMODB_TABLE")
-	if tableName == "" {
-		tableName = "<your table name>"
+// cleanupResources handles the destruction of provisioned resources
+func cleanupResources(provisionID string) error {
+	workingDir := filepath.Join(os.Getenv("TERRAFORM_WORKING_DIR"), provisionID)
+
+	// Run terraform destroy
+	cmd := exec.Command("terraform", "destroy", "-auto-approve")
+	cmd.Dir = workingDir
+
+	if output, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("terraform destroy failed: %v, output: %s", err, output)
 	}
 
-	// Query items where TTL has expired
-	input := &dynamodb.ScanInput{
-		TableName:        &tableName,
-		FilterExpression: aws.String("ttl < :current_time"),
-		ExpressionAttributeValues: map[string]types.AttributeValue{
-			":current_time": &types.AttributeValueMemberN{
-				Value: fmt.Sprintf("%d", getCurrentTime())},
+	// Clean up DynamoDB entry and working directory
+	if err := deleteStateEntry(provisionID); err != nil {
+		return fmt.Errorf("failed to delete state entry: %v", err)
+	}
+
+	return os.RemoveAll(workingDir)
+}
+
+func queryExpiredEntries() ([]StateEntry, error) {
+	currentTime := time.Now().Unix()
+
+	input := &dynamodb.QueryInput{
+		TableName:              aws.String(os.Getenv("DYNAMODB_TABLE")),
+		IndexName:              aws.String("TTLIndex"),
+		KeyConditionExpression: aws.String("TTL <= :now"),
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":now": {N: aws.String(fmt.Sprintf("%d", currentTime))},
 		},
 	}
 
-	response, err := dbClient.Scan(ctx, input)
+	var entries []StateEntry
+	result, err := dynamoClient.Query(input)
 	if err != nil {
-		return nil, fmt.Errorf("Error querying DynamoDB: %v", err)
+		return nil, err
 	}
 
-	var resources []Resource
-	for _, item := range response.Items {
-		resource := Resource{}
-		err := attributeValueToStruct(item, &resource)
-		if err != nil {
-			log.Printf("Error converting attribute value to struct: %v", err)
-			continue
-		}
-		resources = append(resources, resource)
-	}
-	return resources, nil
+	err = dynamodbattribute.UnmarshalListOfMaps(result.Items, &entries)
+	return entries, err
 }
 
-// destroyResources triggers Terraform commands to destroy resources for a given environment
-func destroyResources(environment string) error {
-	log.Printf("Destroying resources for environment: %s", environment)
-
-	cmd := exec.Command("terraform", "destroy", "-var", fmt.Sprintf("environment=%s", environment), "-auto-approve")
-	cmd.Dir = os.Getenv("TERRAFORM_DIR")
-
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("terraform destroy failed: %v\nOutput: %s", err, string(output))
+// deleteStateEntry removes the provisioning state entry from DynamoDB
+func deleteStateEntry(id string) error {
+	tableName := os.Getenv("DYNAMODB_TABLE")
+	if tableName == "" {
+		return fmt.Errorf("DYNAMODB_TABLE environment variable not set")
 	}
-	log.Printf("Terraform output: %s", string(output))
 
-	return nil
+	input := &dynamodb.DeleteItemInput{
+		TableName: aws.String(tableName),
+		Key: map[string]*dynamodb.AttributeValue{
+			"ID": {
+				S: aws.String(id),
+			},
+		},
+	}
+
+	_, err := dynamoClient.DeleteItem(input)
+	return err
 }
 
-// getCurrentTime returns the current Unix timestamp in seconds
-func getCurrentTime() int64 {
-	return time.Now().Unix()
-}
-
-// attributeValueToStruct converts a map of attribute values to a Go struct
-func attributeValueToStruct(attributes map[string]types.AttributeValue, output interface{}) error {
-	data, err := json.Marshal(attributes)
-	if err != nil {
-		return fmt.Errorf("Error marshalling attribute values: %v", err)
+func createErrorResponse(statusCode int, message string, err error) (events.APIGatewayProxyResponse, error) {
+	errResponse := struct {
+		Success bool   `json:"success"`
+		Message string `json:"message"`
+		Error   string `json:"error,omitempty"`
+	}{
+		Success: false,
+		Message: message,
 	}
-	return json.Unmarshal(data, output)
+
+	if err != nil {
+		errResponse.Error = err.Error()
+	}
+
+	body, err := json.Marshal(errResponse)
+	if err != nil {
+		return events.APIGatewayProxyResponse{}, fmt.Errorf("failed to marshal error response: %v", err)
+	}
+
+	return events.APIGatewayProxyResponse{
+		StatusCode: statusCode,
+		Body:       string(body),
+		Headers: map[string]string{
+			"Content-Type": "application/json",
+			"X-Error-Type": message,
+		},
+	}, nil
 }
