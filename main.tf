@@ -54,7 +54,8 @@ module "s3" {
 module "lambda" {
   source          = "./modules/lambda"
   environment_tag = var.environment
-  table_name      = module.dynamodb.aws_dynamodb_table
+  table_name      = module.dynamodb.dynamodb_table_name
+  terraform_dir   = var.terraform_dir
 }
 
 module "api_gateway" {

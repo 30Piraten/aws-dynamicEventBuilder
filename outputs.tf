@@ -1,5 +1,15 @@
-# output "vpc_id" {
-# value = module.vpc.vpc_id
-# }
+output "lambda_gatway_api_url" {
+  value = module.lambda.gateway_api_url
+}
 
-# Add more outputs as needed
+output "ttl_expiry_time" {
+  value = module.dynamodb.ttl_expiry_time
+}
+
+output "aws_dynamodb_table" {
+  value = module.dynamodb.aws_dynamodb_table
+}
+
+output "dynamodb_table_name" {
+  value = module.dynamodb.aws_dynamodb_table.name
+}

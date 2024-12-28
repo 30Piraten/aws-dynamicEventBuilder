@@ -3,11 +3,7 @@ variable "region" {
   default     = "us-east-1"
 }
 
-variable "ttl_expiry_time" {
-  type        = number
-  description = "ttl expiry time"
-}
-
+// TODO: environment needs to be dynamic
 variable "environment" {
   description = "Environment name (e.g., dev, test, prod)"
   type        = string
@@ -19,8 +15,9 @@ variable "tags" {
   description = "Tags to apply to all resources."
   type        = map(string)
   default = {
-    Owner   = "cloud-team"
-    Project = "env-manager"
+    # Owner   = "prod" ? "prod-team" : "dev-team"
+    Owner   = "dev-team"
+    Project = "dynamic-env-manager"
   }
 }
 
@@ -204,9 +201,15 @@ variable "environment_tag" {
   description = "Environment name (e.g., dev, test, prod)"
 }
 
-variable "table_name" {
+# variable "table_name" {
+#   type        = string
+#   description = "Table name for DynamoDB"
+# }
+
+variable "terraform_dir" {
   type        = string
-  description = "Table name for DynamoDB"
+  description = "Terraform directory"
+  default     = "/modules/*"
 
 }
 
