@@ -5,3 +5,8 @@ variable "environment_tag" {
 variable "table_name" {
   type = string
 }
+
+variable "terraform_dir" {
+  type = string
+  
+}
