@@ -1,14 +1,14 @@
 // State locking with DynamoDB to prevent 
 // conflicts when Lambda triggers Terraform
-terraform {
-  backend "s3" {
-    bucket = var.bucket
-    key = var.key
-    region = var.region
-    dynamodb_table = var.dynamodb_table
-    encrypt = true
-  }
-}
+# terraform {
+#   backend "s3" {
+#     bucket = var.bucket
+#     key = var.key
+#     region = var.region
+#     dynamodb_table = var.dynamodb_table
+#     encrypt = true
+#   }
+# }
 
 resource "aws_s3_bucket" "bucket" {
   bucket = var.bucket

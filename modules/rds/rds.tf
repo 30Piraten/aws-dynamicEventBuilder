@@ -11,7 +11,7 @@ resource "aws_db_instance" "db_sql" {
   publicly_accessible  = var.publicly_accessible
 
   username = "r3ev"
-  password = "root9090909"
+  password = "root9090909" // Need to amend this to use SSM
 
   tags = {
     Environment = var.environment

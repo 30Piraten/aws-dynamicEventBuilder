@@ -1,6 +1,7 @@
 // Locals for calculating TTL expiry time for DynamoDB table
 locals {
   ttl_expiry_time = timeadd(timestamp(), var.ttl_hours * 3600)
+  # ttl_expiry_time = var.ttl_expiry_time
 }
 
 resource "aws_dynamodb_table" "env_tracker_dynamo_db" {

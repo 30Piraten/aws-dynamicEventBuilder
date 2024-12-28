@@ -12,3 +12,7 @@ variable "tags" {
   type        = map(string)
   description = "Tags to apply to all resources."
 }
+
+# variable "ttl_expiry_time" {
+#   type = string 
+# }
