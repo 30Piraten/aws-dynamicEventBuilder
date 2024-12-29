@@ -35,3 +35,6 @@ go.work.sum
 # Ignore s3 & rds modules
 modules/s3/
 modules/rds/
+
+# Ignore src
+src/
