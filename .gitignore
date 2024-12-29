@@ -27,3 +27,11 @@ go.work.sum
 # Terraform 
 .terraform/providers/*
 .terraform/providers/registry.terraform.io/hashicorp/aws/5.0.1/darwin_arm64/terraform-provider-aws_v5.0.1_x5
+
+# Ignore all .tfstate files
+*.tfstate
+*.tfstate.*
+
+# Ignore s3 & rds modules
+modules/s3/
+modules/rds/
