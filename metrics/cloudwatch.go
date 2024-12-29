@@ -46,23 +46,32 @@ func PublishProvisioningMetric(ctx context.Context) {
 }
 
 // PublishTerminationMetric publishes a custom metric for instance termination
-// func PublishTerminationMetric() {
-// 	_, ok := cloudwatchClient.PutMetricData(context.TODO(), &cloudwatch.PutMetricDataInput{
-// 		Namespace: aws.String("EC2ProvisioningMetrics"),
-// 		MetricData: []types.MetricDatum{
-// 			{
-// 				MetricName: aws.String("InstancesTerminated"),
-// 				Unit:       types.StandardUnitCount,
+func PublishTerminationMetric(ctx context.Context) {
 
-// 				// Every termination increases by 1
-// 				Value: aws.Float64(1),
-// 			},
-// 		},
-// 	})
+	config, err := config.LoadDefaultConfig(ctx)
+	if err != nil {
+		logging.LogError("Failed to load AWS config:", fmt.Errorf("%s", err))
+	}
 
-// 	if ok != nil {
-// 		logging.LogError("Failed to publish termination metric: ", ok)
-// 	} else {
-// 		logging.LogInfo("Published termination metric to CloudWatch")
-// 	}
-// }
+	// Initialise CloudWatch client
+	cloudWatchClient := cloudwatch.NewFromConfig(config)
+
+	_, ok := cloudWatchClient.PutMetricData(context.TODO(), &cloudwatch.PutMetricDataInput{
+		Namespace: aws.String("EC2ProvisioningMetrics"),
+		MetricData: []types.MetricDatum{
+			{
+				MetricName: aws.String("InstancesTerminated"),
+				Unit:       types.StandardUnitCount,
+
+				// Every termination increases by 1
+				Value: aws.Float64(1),
+			},
+		},
+	})
+
+	if ok != nil {
+		logging.LogError("Failed to publish termination metric: ", ok)
+	} else {
+		logging.LogInfo("Published termination metric to CloudWatch")
+	}
+}
