@@ -9,7 +9,3 @@ output "ttl_expiry_time" {
 output "aws_dynamodb_table" {
   value = module.dynamodb.aws_dynamodb_table
 }
-
-output "dynamodb_table_name" {
-  value = module.dynamodb.aws_dynamodb_table.name
-}

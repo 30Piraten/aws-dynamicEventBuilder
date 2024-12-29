@@ -8,8 +8,6 @@ terraform {
 }
 
 provider "aws" {
-  region  = var.region
+  region  = "us-east-1"
   profile = "tf-user"
-  # access_key = "AKIAWPPO6UVN2SM2DK7M"
-  # secret_key = "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"
 }
