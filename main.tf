@@ -22,31 +22,6 @@ module "ec2" {
   ttl_expiry_time   = module.dynamodb.ttl_expiry_time
 }
 
-# module "rds" {
-#   source               = "./modules/rds"
-#   engine               = var.engine
-#   db_name              = var.db_name
-#   multi_az             = var.multi_az
-#   instance_class       = var.instance_class
-#   engine_version       = var.engine_version
-#   allocated_storage    = var.allocated_storage
-#   skip_final_snapshot  = var.skip_final_snapshot
-#   publicly_accessible  = var.publicly_accessible
-#   parameter_group_name = var.parameter_group_name
-#   ttl_expiry_time      = module.dynamodb.ttl_expiry_time
-#   environment          = var.environment
-# }
-
-# module "s3" {
-#   source          = "./modules/s3"
-#   key             = var.key
-#   region          = var.region
-#   bucket          = var.bucket
-#   dynamodb_table  = var.dynamodb_table
-#   ttl_expiry_time = module.dynamodb.ttl_expiry_time
-#   environment     = var.environment
-# }
-
 module "lambda" {
   source          = "./modules/lambda"
   environment_tag = var.environment
