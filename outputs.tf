@@ -9,3 +9,8 @@ output "ttl_expiry_time" {
 output "aws_dynamodb_table" {
   value = module.dynamodb.aws_dynamodb_table
 }
+
+output "network_interface_id" {
+  value = module.vpc.network_interface_id
+
+}

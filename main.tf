@@ -15,12 +15,23 @@ module "vpc" {
 }
 
 module "ec2" {
-  source            = "./modules/ec2"
-  tag_name          = var.tag_name
-  instance_type     = var.instance_type
-  environment       = var.environment
-  ttl_expiry_time   = module.dynamodb.ttl_expiry_time
+  source               = "./modules/ec2"
+  tag_name             = var.tag_name
+  instance_type        = var.instance_type
+  environment          = var.environment
+  ttl_expiry_time      = module.dynamodb.ttl_expiry_time
+  network_interface_id = module.vpc.network_interface_id
 }
+
+# module "s3" {
+#   source          = "./modules/s3"
+#   key = var.key
+#   region = var.region 
+#   bucket          = var.bucket
+#   environment     = var.environment
+#   ttl_expiry_time = module.dynamodb.ttl_expiry_time
+# }
+
 
 module "lambda" {
   source          = "./modules/lambda"

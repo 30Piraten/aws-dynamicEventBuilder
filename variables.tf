@@ -34,6 +34,7 @@ variable "instance_type" {
   description = "Instance type for the EC2 instance"
 }
 
+
 variable "tag_name" {
   type        = string
   default     = "WebServer"
@@ -163,12 +164,6 @@ variable "key" {
   type        = string
   default     = "provisionenv/terraform.tfstate"
   description = "S3 bucket key"
-}
-
-variable "dynamodb_table" {
-  type        = string
-  default     = "terraform-lock"
-  description = "Dynamo table for the S3"
 }
 
 // LAMBDA VARIABLE DECLARATION 
