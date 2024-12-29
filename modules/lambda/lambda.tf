@@ -151,10 +151,11 @@ resource "aws_lambda_permission" "provisionenv" {
 }
 
 # Lambda permission
-resource "aws_lambda_permission" "allow_eventbridge" {
+resource "aws_lambda_permission" "allow_eventbridge_invoke" {
   statement_id  = "AllowEventBridgeInvoke"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.cleanupenv.function_name
   principal     = "events.amazonaws.com"
-  source_arn    = aws_cloudwatch_event_rule.environement_cleanup.arn
+  # source_arn    = aws_cloudwatch_event_rule.environement_cleanup.arn
+  source_arn = var.source_arn
 }

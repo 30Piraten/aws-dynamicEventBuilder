@@ -10,3 +10,7 @@ variable "terraform_dir" {
   type = string
   
 }
+
+variable "source_arn" {
+  type = string 
+}
