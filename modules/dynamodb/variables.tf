@@ -14,5 +14,5 @@ variable "tags" {
 }
 
 # variable "ttl_expiry_time" {
-#   type = string 
+#   type = number 
 # }

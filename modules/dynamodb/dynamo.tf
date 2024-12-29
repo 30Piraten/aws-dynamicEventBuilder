@@ -1,18 +1,22 @@
 // Locals for calculating TTL expiry time for DynamoDB table
 locals {
-  ttl_expiry_time = timeadd(timestamp(), var.ttl_hours * 3600)
-  # ttl_expiry_time = var.ttl_expiry_time
+  # ttl_expiry_time = timeadd(timestamp(), "${var.ttl_hours * 3600}s")
+  #  ttl_expiry_time = "${var.ttl_hours * 3600}s"
+
+  ttl_expiry_time = var.ttl_hours * 3600
 }
 
 resource "aws_dynamodb_table" "env_tracker_dynamo_db" {
   name           = "${var.environment}-dynamodb-table"
   billing_mode   = "PAY_PER_REQUEST"
   hash_key       = "EnvironmentName"
-  range_key      = "ttl"
+  range_key      = "Team"
 
-  read_capacity  = 5
-  write_capacity = 5
-
+  attribute {
+    name = "Team"
+    type = "S"
+  }
+ 
   attribute {
     name = "EnvironmentName"
     type = "S"
@@ -26,6 +30,7 @@ resource "aws_dynamodb_table" "env_tracker_dynamo_db" {
   tags = merge(var.tags, {
     Name = "${var.environment}-dynamodb-table"
     Environment = var.environment
-    TTL  = "${local.ttl_expiry_time}"
+    # TTL  = "${local.ttl_expiry_time}"
+    TTL = local.ttl_expiry_time
   })
 }
