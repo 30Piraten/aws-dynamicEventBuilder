@@ -3,11 +3,12 @@ package cleanupenv
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/30Piraten/aws-dynamicEventBuilder/lambda-functions/provisionenv"
+	"github.com/30Piraten/aws-dynamicEventBuilder/logging"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -16,8 +17,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go/aws"
 )
-
-var StateEntry provisionenv.StateEntry
 
 // HandleCleanupRequest is the handler for the cleanup
 // of expired EC2 instances
@@ -40,17 +39,33 @@ func HandleCleanupRequest(ctx context.Context, event events.CloudWatchEvent) err
 		return fmt.Errorf("failed to get expired instances, %v", err)
 	}
 
+	// WaitGroup for synchronising goroutines
+	var wg sync.WaitGroup
+
 	// Terminate expired instances
 	for _, instance := range expiredInstances {
-		if err := terminateInstance(ctx, ec2Client, instance); err != nil {
-			log.Printf("Failed to terminate instance %s: %v", instance.InstanceID, err)
-			continue
-		}
 
-		if err := markInstanceAsTerminated(ctx, dynamodbClient, instance.ID); err != nil {
-			log.Printf("Failed to update instance status %s: %v", instance.ID, err)
-		}
+		wg.Add(1)
+		go func(instance provisionenv.StateEntry) {
+			defer wg.Done()
+			if err := terminateInstance(ctx, ec2Client, instance); err != nil {
+				logging.LogError(fmt.Sprintf("Failed to terminate instance: %s", instance.InstanceID), err)
+				// continue
+			} else {
+				logging.LogInfo(fmt.Sprintf("Successfully terminated instance: %s", instance.InstanceID))
+			}
+
+			// Mark as terminated in DynamoDB
+			if err := markInstanceAsTerminated(ctx, dynamodbClient, instance.ID); err != nil {
+				logging.LogInfo(fmt.Sprintf("Failed to update instance status %s: %v", instance.ID, err))
+			} else {
+				logging.LogInfo(fmt.Sprintf("Successfully updated instance status: %s", instance.ID))
+			}
+		}(instance)
 	}
+
+	// Wait for all gorooutines to finish
+	wg.Wait()
 	return nil
 }
 
