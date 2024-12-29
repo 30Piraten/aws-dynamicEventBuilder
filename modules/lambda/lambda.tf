@@ -39,7 +39,9 @@ resource "aws_iam_role_policy" "lambda_permissions" {
           "dynamodb:UpdateItem",
           "dynamodb:GetItem",
           "dynamodb:DeleteItem",
-          "s3:*"
+          "s3:*",
+          "ec2:DescribeInstances",
+          "ec2:TerminateInstances",
         ]
         Resource = "*"
       }

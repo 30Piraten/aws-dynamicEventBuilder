@@ -14,11 +14,14 @@ data "aws_ami" "amazon_linux" {
   owners = ["137112412989"]
 }
 
-
-
 resource "aws_instance" "vm" {
   ami           = data.aws_ami.amazon_linux.id
   instance_type = var.instance_type
+
+  network_interface {
+    device_index         = 0
+    network_interface_id = var.network_interface_id
+  }
 
   tags = {
     name = var.tag_name

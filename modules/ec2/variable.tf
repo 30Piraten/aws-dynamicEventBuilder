@@ -13,3 +13,7 @@ variable "environment" {
 variable "ttl_expiry_time" {
   type = number
 }
+
+variable "network_interface_id" {
+  type = string
+}

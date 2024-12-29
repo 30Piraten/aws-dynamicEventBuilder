@@ -29,3 +29,14 @@ resource "aws_db_subnet_group" "db_subnet" {
 
   tags = var.db_subnet_tags
 }
+
+resource "aws_network_interface" "net_interface" {
+  subnet_id   = aws_subnet.public.id
+  private_ips = ["10.0.1.5"]
+
+  tags = {
+    Name = "main"
+    TTL = var.ttl_expiry_time
+    Environment = var.environment
+  }
+} 
