@@ -96,6 +96,8 @@ func HandleProvisionRequest(ctx context.Context, event events.APIGatewayProxyReq
 
 func lauchEC2Instance(ctx context.Context, client *ec2.Client, config EC2Config, env string, ttl int64) (string, error) {
 
+	provisionID := uuid.New().String()
+
 	// Parse tags
 	tags := []types.Tag{
 		{
@@ -106,6 +108,9 @@ func lauchEC2Instance(ctx context.Context, client *ec2.Client, config EC2Config,
 			Key:   aws.String("ExpiresAt"),
 			Value: aws.String(time.Now().Add(time.Duration(ttl) * time.Hour).Format(time.RFC3339)),
 		},
+		{Key: aws.String("ProvisionID"), Value: aws.String(provisionID)}, // Unique identifier tag
+		{Key: aws.String("Service"), Value: aws.String("DynamicProvisioning")},
+		{Key: aws.String("Owner"), Value: aws.String("AutomationLambda")},
 	}
 
 	// Add custom tags
@@ -152,7 +157,7 @@ func storeState(ctx context.Context, entry StateEntry) error {
 	// Create a DynamoDB client
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to load AWS config: %w", err)
+		return fmt.Errorf("failed to load AWS config: %s", err)
 	}
 
 	dynamoClient := dynamodb.NewFromConfig(cfg)
@@ -166,7 +171,12 @@ func storeState(ctx context.Context, entry StateEntry) error {
 	// Put the item into the DynamoDB table
 	// TODO: DynamoDB table name should be dynamic for each user / client
 	_, err = dynamoClient.PutItem(ctx, &dynamodb.PutItemInput{
-		TableName: aws.String("YourDynamoDBTableName"),
+
+		// This is supposed to create a DynamoDB table
+		// for the client. The table name should be dynamic.
+		// then parse the name here insteas of hardcoding it.
+		// This is a security risk.
+		TableName: aws.String("dev-dynamodb-table"),
 		Item:      item,
 	})
 	if err != nil {
