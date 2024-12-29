@@ -23,7 +23,7 @@ module "ec2" {
   network_interface_id = module.vpc.network_interface_id
 }
 
-module "eventsBridge" {
+module "events" {
   source      = "./modules/events"
   environment = var.environment
   cleanup_lambda_arn  = module.lambda.aws_cleanup_lambda_arn
