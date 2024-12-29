@@ -23,15 +23,11 @@ module "ec2" {
   network_interface_id = module.vpc.network_interface_id
 }
 
-# module "s3" {
-#   source          = "./modules/s3"
-#   key = var.key
-#   region = var.region 
-#   bucket          = var.bucket
-#   environment     = var.environment
-#   ttl_expiry_time = module.dynamodb.ttl_expiry_time
-# }
-
+module "eventsBridge" {
+  source      = "./modules/events"
+  environment = var.environment
+  cleanup_lambda_arn  = module.lambda.aws_cleanup_lambda_arn
+}
 
 module "lambda" {
   source          = "./modules/lambda"
