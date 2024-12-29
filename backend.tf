@@ -1,18 +1,10 @@
-# Terraform Backend Configuration (Using Terraform Cloud/Enterprise)
+# Backend for Terraform state
 terraform {
-  backend "remote" {
-    hostname     = "app.terraform.io"
-    organization = "datenbank"
-    workspaces {
-      name = "aws-dynamicEventBuilder"
-    }
-  }
-  cloud {
-
-    organization = "datenbank"
-
-    workspaces {
-      name = "aws-dynamicEventBuilder"
-    }
+  backend "s3" {
+    bucket         = var.bucket
+    key            = "environments/state.tfstate"
+    region         = "us-east-1"
+    dynamodb_table = "terraform-locks"
+    encrypt        = true
   }
 }
