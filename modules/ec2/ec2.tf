@@ -1,19 +1,23 @@
-data "aws_ami" "ubuntu" {
-  most_recent = true
+data "aws_ami" "amazon_linux" {
+  most_recent = true 
 
   filter {
-    name   = var.filter_name_one
-    values = var.filter_values_one
+    name   = "name"
+    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
   }
 
   filter {
-    name   = var.filter_name_two
-    values = var.filter_values_two
+    name   = "virtualization-type"
+    values = ["hvm"]
   }
+
+  owners = ["137112412989"]
 }
 
+
+
 resource "aws_instance" "vm" {
-  ami           = data.aws_ami.ubuntu.id
+  ami           = data.aws_ami.amazon_linux.id
   instance_type = var.instance_type
 
   tags = {
