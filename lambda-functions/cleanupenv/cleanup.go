@@ -56,7 +56,7 @@ func HandleCleanupRequest(ctx context.Context, event events.CloudWatchEvent) err
 			}
 
 			// Mark as terminated in DynamoDB
-			if err := markInstanceAsTerminated(ctx, dynamodbClient, instance.ID); err != nil {
+			if err := MarkInstanceAsTerminated(ctx, dynamodbClient, instance.ID); err != nil {
 				logging.LogInfo(fmt.Sprintf("Failed to update instance status %s: %v", instance.ID, err))
 			} else {
 				logging.LogInfo(fmt.Sprintf("Successfully updated instance status: %s", instance.ID))
@@ -108,7 +108,7 @@ func terminateInstance(ctx context.Context, client *ec2.Client, instance provisi
 	return err
 }
 
-func markInstanceAsTerminated(ctx context.Context, client *dynamodb.Client, instanceID string) error {
+func MarkInstanceAsTerminated(ctx context.Context, client *dynamodb.Client, instanceID string) error {
 
 	input := &dynamodb.UpdateItemInput{
 		TableName: aws.String(os.Getenv("DYNAMODB_TABLE_NAME")),

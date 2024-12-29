@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/30Piraten/aws-dynamicEventBuilder/logging"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -87,6 +88,10 @@ func HandleProvisionRequest(ctx context.Context, event events.APIGatewayProxyReq
 		return createErrorResponse(500, "Failed to store state: ", err)
 	}
 
+	// TODO: Corellation logs
+	logging.LogInfo(fmt.Sprintf(
+		"Provision Request: ProvisionID: %s, InstanceID: %s, Environment: %s, Region: %s", provisionID, instanceID, req.Environment, req.Region))
+
 	return events.APIGatewayProxyResponse{
 		StatusCode: 200,
 		Body: fmt.Sprintf(`{
@@ -99,27 +104,7 @@ func lauchEC2Instance(ctx context.Context, client *ec2.Client, config EC2Config,
 	provisionID := uuid.New().String()
 
 	// Parse tags
-	tags := []types.Tag{
-		{
-			Key:   aws.String("Environment"),
-			Value: aws.String(env),
-		},
-		{
-			Key:   aws.String("ExpiresAt"),
-			Value: aws.String(time.Now().Add(time.Duration(ttl) * time.Hour).Format(time.RFC3339)),
-		},
-		{Key: aws.String("ProvisionID"), Value: aws.String(provisionID)}, // Unique identifier tag
-		{Key: aws.String("Service"), Value: aws.String("DynamicProvisioning")},
-		{Key: aws.String("Owner"), Value: aws.String("AutomationLambda")},
-	}
-
-	// Add custom tags
-	for k, v := range config.Tags {
-		tags = append(tags, types.Tag{
-			Key:   aws.String(k),
-			Value: aws.String(v),
-		})
-	}
+	tags := prepareTags(env, ttl, provisionID, config.Tags)
 
 	// Launch the instance
 	launch := &ec2.RunInstancesInput{
@@ -141,6 +126,33 @@ func lauchEC2Instance(ctx context.Context, client *ec2.Client, config EC2Config,
 	}
 
 	return *result.Instances[0].InstanceId, nil
+}
+
+func prepareTags(env string, ttl int64, provisionID string, customTags map[string]string) []types.Tag {
+
+	tags := []types.Tag{
+		{
+			Key:   aws.String("Environment"),
+			Value: aws.String(env),
+		},
+		{
+			Key:   aws.String("ExpiresAt"),
+			Value: aws.String(time.Now().Add(time.Duration(ttl) * time.Hour).Format(time.RFC3339)),
+		},
+		{Key: aws.String("ProvisionID"), Value: aws.String(provisionID)}, // Unique identifier tag
+		{Key: aws.String("Service"), Value: aws.String("DynamicProvisioning")},
+		{Key: aws.String("Owner"), Value: aws.String("AutomationLambda")},
+	}
+
+	// Add custom tags
+	for k, v := range customTags {
+		tags = append(tags, types.Tag{
+			Key:   aws.String(k),
+			Value: aws.String(v),
+		})
+	}
+
+	return tags
 }
 
 func createErrorResponse(statusCode int, message string, err error) (events.APIGatewayProxyResponse, error) {
@@ -184,4 +196,21 @@ func storeState(ctx context.Context, entry StateEntry) error {
 	}
 
 	return nil
+}
+
+func storeStateWithRetries(ctx context.Context, entry StateEntry, maxEntries int) error {
+
+	for i := 0; i < maxEntries; i++ {
+		err := storeState(ctx, entry)
+		if err != nil {
+			logging.LogInfo(fmt.Sprintf("Successfully stored state in DynamoDB for InstanceID: %s, provisionID: %s", entry.InstanceID, entry.ID))
+
+			return nil
+		}
+
+		logging.LogError(fmt.Sprintf("Failed to store state for ProvisionID: %s (attempt: %d/%d): %v", entry.ID, i+1, maxEntries, err), err)
+		time.Sleep(time.Duration(i+1) * time.Second)
+	}
+
+	return fmt.Errorf("exceeded maximum retries to store state for provisionID: %s", entry.ID)
 }
