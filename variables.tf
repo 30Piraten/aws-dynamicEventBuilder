@@ -173,10 +173,10 @@ variable "environment_tag" {
   description = "Environment name (e.g., dev, test, prod)"
 }
 
-# variable "table_name" {
-#   type        = string
-#   description = "Table name for DynamoDB"
-# }
+variable "source_arn" {
+  type = string 
+  description = "Source ARN for the allow_eventbridge_invoke"
+}
 
 variable "terraform_dir" {
   type        = string
@@ -186,3 +186,9 @@ variable "terraform_dir" {
 }
 
 // API GATEWAY VARIABLE DECLARATION
+
+
+// CLOUDWATCH VARIABLE DECLARATION
+variable "cleanup_lambda_arn" {
+  type = string 
+}
