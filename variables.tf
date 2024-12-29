@@ -24,7 +24,7 @@ variable "tags" {
 variable "ttl_hours" {
   description = "Time-to-live in hours for resources."
   type        = number
-  default     = 24 # Default to 24 hours
+  default     = 1 # Default to 24 hours
 }
 
 # EC2 VARIABLE DECLARATION
@@ -32,29 +32,6 @@ variable "instance_type" {
   type        = string
   default     = "t2.micro"
   description = "Instance type for the EC2 instance"
-}
-
-variable "filter_values_one" {
-  type    = list(string)
-  default = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
-}
-
-variable "filter_name_one" {
-  type        = string
-  default     = "name"
-  description = "name"
-}
-
-variable "filter_values_two" {
-  type        = list(string)
-  default     = ["hvm"]
-  description = "value"
-}
-
-variable "filter_name_two" {
-  type        = string
-  default     = "virtualization-type"
-  description = "Virtualization type"
 }
 
 variable "tag_name" {
@@ -140,7 +117,7 @@ variable "aws_subnet_public_cidr_block" {
 
 variable "aws_subnet_public_availability_zone" {
   type        = string
-  default     = "us-east-1a"
+  default     = "us-east-1b"
   description = "Availability Zone for the public subnet"
 }
 
@@ -158,7 +135,7 @@ variable "aws_subnet_private_cidr_block" {
 
 variable "aws_subnet_private_availability_zone" {
   type        = string
-  default     = "us-east-1b"
+  default     = "us-east-1c"
   description = "Availability zone for the private subnet"
 }
 
@@ -178,7 +155,7 @@ variable "db_subnet_tags" {
 // S3 VARIABLE DECLARATION 
 variable "bucket" {
   type        = string
-  default     = "terraform-state-bucket"
+  default     = "dynamiceventbuilder-bucket-v01"
   description = "Name of the S3 bucket created"
 }
 
