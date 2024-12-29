@@ -24,6 +24,13 @@ resource "aws_dynamodb_table" "env_tracker_dynamo_db" {
     enabled        = true
   }
 
+   global_secondary_index {
+    name               = "TTLIndex"
+    hash_key           = "status"
+    range_key          = "TTL"
+    projection_type    = "ALL"
+  }
+
   tags = merge(var.tags, {
     Name = "${var.environment}-dynamodb-table"
     Environment = var.environment

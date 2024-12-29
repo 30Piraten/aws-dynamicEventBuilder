@@ -148,3 +148,12 @@ resource "aws_lambda_permission" "provisionenv" {
   principal = "apigateway.amazonaws.com"
   source_arn = "${aws_apigatewayv2_api.lambda_api.execution_arn}/*"
 }
+
+# Lambda permission
+resource "aws_lambda_permission" "allow_eventbridge" {
+  statement_id  = "AllowEventBridgeInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.cleanupenv.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.environement_cleanup.arn
+}
