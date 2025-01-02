@@ -41,7 +41,6 @@ type StateEntry struct {
 
 // HandleProvisionRequest is the handler for the provisoning
 // the EC2 instance and storing the state in DynamoDB
-
 func HandleProvisionRequest(ctx context.Context, event events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 
 	// Parse the request
@@ -128,6 +127,12 @@ func lauchEC2Instance(ctx context.Context, client *ec2.Client, config EC2Config,
 	return *result.Instances[0].InstanceId, nil
 }
 
+// prepareTags constructs a list of EC2 instance tags based on the provided
+// environment, TTL, provision ID, and custom tags. It includes default tags
+// such as Environment, ExpiresAt (calculated using the TTL), ProvisionID,
+// Service, and Owner. The function then appends any additional custom tags
+// provided in the customTags map. Returns a slice of types.Tag to be applied
+// to the EC2 instance.
 func prepareTags(env string, ttl int64, provisionID string, customTags map[string]string) []types.Tag {
 
 	tags := []types.Tag{
@@ -155,6 +160,10 @@ func prepareTags(env string, ttl int64, provisionID string, customTags map[strin
 	return tags
 }
 
+// createErrorResponse constructs an API Gateway Proxy response with the given
+// HTTP status code, error message, and error details. It returns a formatted
+// response including a JSON body that indicates the failure, along with the
+// original error. The response headers specify JSON content type.
 func createErrorResponse(statusCode int, message string, err error) (events.APIGatewayProxyResponse, error) {
 	return events.APIGatewayProxyResponse{
 		StatusCode: statusCode,
@@ -165,6 +174,11 @@ func createErrorResponse(statusCode int, message string, err error) (events.APIG
 	}, fmt.Errorf("%s: %v", message, err)
 }
 
+// storeState stores the given StateEntry in DynamoDB. It uses the AWS default
+// configuration for the current context. The StateEntry is marshaled to a map
+// using the attributevalue package. The item is then put into the DynamoDB table.
+// The table name is currently hardcoded to "dev-dynamodb-table", which is a
+// security risk. The table name should be dynamic for each user / client.
 func storeState(ctx context.Context, entry StateEntry) error {
 	// Create a DynamoDB client
 	cfg, err := config.LoadDefaultConfig(ctx)
@@ -186,7 +200,7 @@ func storeState(ctx context.Context, entry StateEntry) error {
 
 		// This is supposed to create a DynamoDB table
 		// for the client. The table name should be dynamic.
-		// then parse the name here insteas of hardcoding it.
+		// then parse the name here instead of hardcoding it.
 		// This is a security risk.
 		TableName: aws.String("dev-dynamodb-table"),
 		Item:      item,
@@ -198,6 +212,8 @@ func storeState(ctx context.Context, entry StateEntry) error {
 	return nil
 }
 
+// storeStateWithRetries stores the given StateEntry in DynamoDB and retries up to maxEntries times
+// if it fails. If all retries fail, it returns an error.
 func storeStateWithRetries(ctx context.Context, entry StateEntry, maxEntries int) error {
 
 	for i := 0; i < maxEntries; i++ {
