@@ -1,0 +1,11 @@
+Resources:
+  ProvisionEnvFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ProvisionEnvFunction
+      Handler: bootstrap
+      Runtime: provided.al2
+      Architectures:
+      - amd64
+    Metadata:
+      SamResourceId: ProvisionEnvFunction

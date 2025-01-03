@@ -1,0 +1,11 @@
+{
+    "provisionID": "test-provision-123",
+    "instanceType": "t2.micro",
+    "keyName": "my-key-pair",
+    "subnetID": "subnet-0abcd1234efgh5678",
+    "tags": {
+      "Owner": "TestUser",
+      "Purpose": "Testing"
+    }
+  }
+  
