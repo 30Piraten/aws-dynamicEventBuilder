@@ -34,6 +34,14 @@ variable "ttl_hours" {
   default     = 1 # Default to 24 hours
 }
 
+// SSM VARIABLE DECLARATION
+variable "table-type" {
+  type        = string
+  default     = "env-tracker"
+  description = "Type of table"
+}
+
+
 # EC2 VARIABLE DECLARATION
 variable "instance_type" {
   type        = string

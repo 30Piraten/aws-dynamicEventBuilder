@@ -10,6 +10,13 @@ module "cloudwatch" {
 #   region = var.region
 # }
 
+module "ssm" {
+  source = "./modules/ssm"
+  environment = var.environment
+  table-type = var.table-type
+  dynamodb_table_name = module.dynamodb.aws_dynamodb_table.name
+}
+
 module "lambda" {
   source          = "./modules/lambda"
   environment_tag = var.environment
