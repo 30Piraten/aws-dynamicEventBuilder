@@ -61,7 +61,7 @@ func getActiveInstances(ctx context.Context, client *dynamodb.Client) ([]ActiveI
 	// Query DyanmoDB for active instances
 	input := &dynamodb.ScanInput{
 		TableName:        aws.String("dev-dynamodb-table"),
-		FilterExpression: aws.String("Sattus = :status"),
+		FilterExpression: aws.String("Status = :status"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":status": &types.AttributeValueMemberS{
 				Value: "ACTIVE",

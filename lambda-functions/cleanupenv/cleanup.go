@@ -74,7 +74,7 @@ func getExpiredInstances(ctx context.Context, client *dynamodb.Client) ([]provis
 	currentTime := time.Now().Unix()
 
 	input := &dynamodb.QueryInput{
-		TableName:              aws.String(os.Getenv("DYNAMODB_TABLE_NAME")),
+		TableName:              aws.String(os.Getenv("dev-dynamodb-table")),
 		IndexName:              aws.String("TTLIndex"),
 		KeyConditionExpression: aws.String("TTL <= :now AND #status = :status"),
 		ExpressionAttributeNames: map[string]string{
@@ -111,7 +111,7 @@ func terminateInstance(ctx context.Context, client *ec2.Client, instance provisi
 func MarkInstanceAsTerminated(ctx context.Context, client *dynamodb.Client, instanceID string) error {
 
 	input := &dynamodb.UpdateItemInput{
-		TableName: aws.String(os.Getenv("DYNAMODB_TABLE_NAME")),
+		TableName: aws.String(os.Getenv("dev-dynamodb-table")),
 		Key: map[string]types.AttributeValue{
 			"ID": &types.AttributeValueMemberS{
 				Value: instanceID,
