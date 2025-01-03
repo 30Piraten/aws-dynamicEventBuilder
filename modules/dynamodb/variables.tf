@@ -12,3 +12,8 @@ variable "tags" {
   type        = map(string)
   description = "Tags to apply to all resources."
 }
+
+variable "client_id" {
+  type = string
+  description = "Client ID for the dynamodb table"
+}

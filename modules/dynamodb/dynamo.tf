@@ -3,8 +3,15 @@ locals {
   ttl_expiry_time = var.ttl_hours * 3600
 }
 
+resource "random_id" "id" {
+  byte_length = 8
+  keepers = {
+    client_id = var.client_id
+  }
+}
+
 resource "aws_dynamodb_table" "env_tracker_dynamo_db" {
-  name           = "${var.environment}-dynamodb-table"
+  name           = "dynamodb-${var.client_id}-${random_id.id.hex}"
   billing_mode   = "PAY_PER_REQUEST"
   hash_key       = "LockID"
   range_key      = "Dev"
