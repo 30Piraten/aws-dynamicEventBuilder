@@ -10,6 +10,13 @@ variable "environment" {
   default     = "dev"
 }
 
+variable "client_id" {
+  description = "Client ID"
+  type        = string
+  default     = "dev"
+  
+}
+
 # DYANAMODB VARIABLE DECLARATION 
 variable "tags" {
   description = "Tags to apply to all resources."
@@ -173,10 +180,10 @@ variable "environment_tag" {
   description = "Environment name (e.g., dev, test, prod)"
 }
 
-variable "source_arn" {
-  type = string 
-  description = "Source ARN for the allow_eventbridge_invoke"
-}
+# variable "source_arn" {
+#   type = string 
+#   description = "Source ARN for the allow_eventbridge_invoke"
+# }
 
 variable "terraform_dir" {
   type        = string
@@ -189,6 +196,6 @@ variable "terraform_dir" {
 
 
 // CLOUDWATCH VARIABLE DECLARATION
-variable "cleanup_lambda_arn" {
-  type = string 
-}
+# variable "cleanup_lambda_arn" {
+#   type = string 
+# }

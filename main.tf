@@ -1,11 +1,13 @@
-module "events" {
-  source      = "./modules/events"
+module "cloudwatch" {
+  source      = "./modules/cloudwatch"
   environment = var.environment
   cleanup_lambda_arn  = module.lambda.aws_cleanup_lambda_arn
 }
 
 # module "monitordrift" {
 #   source = "./modules/monitordrift"
+#   monitor_drift_lambda_role = module.lambda.aws_iam_role_lambda_exec_arn
+#   region = var.region
 # }
 
 module "lambda" {
@@ -13,7 +15,7 @@ module "lambda" {
   environment_tag = var.environment
   table_name      = module.dynamodb.aws_dynamodb_table.name
   terraform_dir   = var.terraform_dir
-  source_arn = module.events.environement_cleanup
+  source_arn = module.cloudwatch.environement_cleanup
 }
 
 module "api_gateway" {
@@ -25,4 +27,5 @@ module "dynamodb" {
   ttl_hours   = var.ttl_hours
   tags        = var.tags
   environment = var.environment
+  client_id = var.client_id
 }
