@@ -33,5 +33,5 @@ resource "aws_cloudwatch_event_rule" "environment_cleanup" {
 resource "aws_cloudwatch_event_target" "cleanup_lambda" {
   rule      = aws_cloudwatch_event_rule.environment_cleanup.name
   target_id = "EnvironmentCleanupLambda"
-  arn = var.cleanup_lambda_arn # This is the ARN of the Lambda function
+  arn       = var.cleanup_lambda_arn # This is the ARN of the Lambda function
 }

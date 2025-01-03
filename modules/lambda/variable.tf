@@ -1,5 +1,5 @@
 variable "environment_tag" {
-  type = string 
+  type = string
 }
 
 variable "table_name" {
@@ -8,9 +8,9 @@ variable "table_name" {
 
 variable "terraform_dir" {
   type = string
-  
+
 }
 
 variable "source_arn" {
-  type = string 
+  type = string
 }

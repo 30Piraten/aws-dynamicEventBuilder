@@ -1,10 +1,10 @@
 variable "environment" {
-  type = string 
+  type        = string
   description = "Environment name for: prod, dev and test"
 }
 
 variable "ttl_hours" {
-  type = number
+  type        = number
   description = "Time to live for the dynamodb table"
 }
 
@@ -14,6 +14,6 @@ variable "tags" {
 }
 
 variable "client_id" {
-  type = string
+  type        = string
   description = "Client ID for the dynamodb table"
 }

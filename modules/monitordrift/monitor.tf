@@ -11,7 +11,7 @@ resource "null_resource" "build_monitor_drift" {
     # command = "zip -r monitor_drift.zip monitor_drift"
     command = "${path.root}/script/monitor.sh"
   }
-  
+
 }
 
 resource "aws_lambda_function" "monitor_drift_lambda" {
@@ -24,7 +24,7 @@ resource "aws_lambda_function" "monitor_drift_lambda" {
   timeout          = 10
   memory_size      = 128
 
-  depends_on = [ null_resource.build_monitor_drift ]
+  depends_on = [null_resource.build_monitor_drift]
 
   environment {
     variables = {
