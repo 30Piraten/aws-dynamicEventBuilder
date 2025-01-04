@@ -1,6 +1,5 @@
-resource "random_string" "id" {
-  length  = 8
-  special = false
+resource "random_id" "id" {
+  byte_length = 8
   keepers = {
     client_id = var.environment
   }
@@ -8,8 +7,8 @@ resource "random_string" "id" {
 
 # CloudWatch Log Group for Lambda logs
 resource "aws_cloudwatch_log_group" "cleanup_lambda" {
-  name              = "watch-lambda-${var.client_id}-${random_string.id.hex}"
-  retention_in_days = 2
+  name              = "watch-lambda-${var.client_id}-${random_id.id.hex}"
+  retention_in_days = 3
 
   tags = {
     Environment = var.environment

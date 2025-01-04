@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	db "github.com/30Piraten/aws-dynamicEventBuilder/dynamotable"
 	"github.com/30Piraten/aws-dynamicEventBuilder/logging"
+	"github.com/30Piraten/aws-dynamicEventBuilder/metrics"
+	"github.com/30Piraten/aws-dynamicEventBuilder/ssm"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -74,6 +75,9 @@ func HandleProvisionRequest(ctx context.Context, event events.APIGatewayProxyReq
 		return createErrorResponse(500, "Failed to launch EC2 instance: ", err)
 	}
 
+	// Publish provisioning metric after successful launch of EC2 instance
+	metrics.PublishProvisioningMetric(ctx)
+
 	// Store the state in DynamoDB
 	if err := storeState(ctx, StateEntry{
 		ID:          provisionID,
@@ -97,8 +101,12 @@ func HandleProvisionRequest(ctx context.Context, event events.APIGatewayProxyReq
 		Body: fmt.Sprintf(`{
 		"success": true, "provision_id": "%s", "instance_id": "%s"}`, provisionID, instanceID),
 	}, nil
+
 }
 
+// lauchEC2Instance launches an EC2 instance using the provided EC2 client,
+// configuration, environment, TTL, and custom tags. It returns the instance ID
+// of the newly launched instance, or an error if the launch fails.
 func lauchEC2Instance(ctx context.Context, client *ec2.Client, config EC2Config, env string, ttl int64) (string, error) {
 
 	provisionID := uuid.New().String()
@@ -185,7 +193,7 @@ func storeState(ctx context.Context, entry StateEntry, environment string, table
 		return fmt.Errorf("failed to load AWS config: %s", err)
 	}
 
-	tableName, err := db.TableName(environment, tableType)
+	tableName, err := ssm.TableName(environment, tableType)
 	if err != nil {
 		return fmt.Errorf("failed to get table name: %w", err)
 	}
@@ -199,13 +207,7 @@ func storeState(ctx context.Context, entry StateEntry, environment string, table
 	}
 
 	// Put the item into the DynamoDB table
-	// TODO: DynamoDB table name should be dynamic for each user / client
 	_, err = dynamoClient.PutItem(ctx, &dynamodb.PutItemInput{
-
-		// This is supposed to create a DynamoDB table
-		// for the client. The table name should be dynamic.
-		// then parse the name here instead of hardcoding it.
-		// This is a security risk.
 		TableName: aws.String(tableName),
 		Item:      item,
 	})

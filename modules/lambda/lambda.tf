@@ -43,8 +43,14 @@ resource "aws_iam_role_policy" "lambda_permissions" {
           "ec2:DescribeInstances",
           "ec2:RunInstances",
           "ec2:TerminateInstances",
+
+          "apigateway:GET",
+          "apigateway:PUT",
+          "apigateway:POST",
+          "apigateway:DELETE"
         ]
         Resource = "*"
+        # Resource: "arn:aws:apigateway:us-east-1::/restapis/*/stages/*"
       }
     ]
   })

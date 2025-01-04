@@ -3,12 +3,13 @@ package cleanupenv
 import (
 	"context"
 	"fmt"
-	"os"
 	"sync"
 	"time"
 
 	"github.com/30Piraten/aws-dynamicEventBuilder/lambda-functions/provisionenv"
 	"github.com/30Piraten/aws-dynamicEventBuilder/logging"
+	"github.com/30Piraten/aws-dynamicEventBuilder/metrics"
+	"github.com/30Piraten/aws-dynamicEventBuilder/ssm"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -20,7 +21,7 @@ import (
 
 // HandleCleanupRequest is the handler for the cleanup
 // of expired EC2 instances
-func HandleCleanupRequest(ctx context.Context, event events.CloudWatchEvent) error {
+func HandleCleanupRequest(ctx context.Context, event events.CloudWatchEvent, environment string, tableType string) error {
 
 	// Initialise the AWS config
 	config, err := config.LoadDefaultConfig(ctx)
@@ -34,7 +35,7 @@ func HandleCleanupRequest(ctx context.Context, event events.CloudWatchEvent) err
 	dynamodbClient := dynamodb.NewFromConfig(config)
 
 	// Get the expired instances
-	expiredInstances, err := getExpiredInstances(ctx, dynamodbClient)
+	expiredInstances, err := getExpiredInstances(ctx, dynamodbClient, environment, tableType)
 	if err != nil {
 		return fmt.Errorf("failed to get expired instances, %v", err)
 	}
@@ -56,7 +57,7 @@ func HandleCleanupRequest(ctx context.Context, event events.CloudWatchEvent) err
 			}
 
 			// Mark as terminated in DynamoDB
-			if err := MarkInstanceAsTerminated(ctx, dynamodbClient, instance.ID); err != nil {
+			if err := MarkInstanceAsTerminated(ctx, dynamodbClient, instance.ID, environment, tableType); err != nil {
 				logging.LogInfo(fmt.Sprintf("Failed to update instance status %s: %v", instance.ID, err))
 			} else {
 				logging.LogInfo(fmt.Sprintf("Successfully updated instance status: %s", instance.ID))
@@ -66,15 +67,24 @@ func HandleCleanupRequest(ctx context.Context, event events.CloudWatchEvent) err
 
 	// Wait for all gorooutines to finish
 	wg.Wait()
+
+	// Publish metrics for terminated instances
+	metrics.PublishTerminationMetric(ctx)
+
 	return nil
 }
 
-func getExpiredInstances(ctx context.Context, client *dynamodb.Client) ([]provisionenv.StateEntry, error) {
+func getExpiredInstances(ctx context.Context, client *dynamodb.Client, environment string, tableType string) ([]provisionenv.StateEntry, error) {
 
 	currentTime := time.Now().Unix()
 
+	tableName, err := ssm.TableName(environment, tableType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get table name: %w", err)
+	}
+
 	input := &dynamodb.QueryInput{
-		TableName:              aws.String(os.Getenv("dev-dynamodb-table")),
+		TableName:              aws.String(tableName),
 		IndexName:              aws.String("TTLIndex"),
 		KeyConditionExpression: aws.String("TTL <= :now AND #status = :status"),
 		ExpressionAttributeNames: map[string]string{
@@ -108,10 +118,15 @@ func terminateInstance(ctx context.Context, client *ec2.Client, instance provisi
 	return err
 }
 
-func MarkInstanceAsTerminated(ctx context.Context, client *dynamodb.Client, instanceID string) error {
+func MarkInstanceAsTerminated(ctx context.Context, client *dynamodb.Client, instanceID string, environment string, tableType string) error {
+
+	tableName, err := ssm.TableName(environment, tableType)
+	if err != nil {
+		return fmt.Errorf("failed to get table name: %w", err)
+	}
 
 	input := &dynamodb.UpdateItemInput{
-		TableName: aws.String(os.Getenv("dev-dynamodb-table")),
+		TableName: aws.String(tableName),
 		Key: map[string]types.AttributeValue{
 			"ID": &types.AttributeValueMemberS{
 				Value: instanceID,
@@ -128,7 +143,7 @@ func MarkInstanceAsTerminated(ctx context.Context, client *dynamodb.Client, inst
 		},
 	}
 
-	_, err := client.UpdateItem(ctx, input)
+	_, err = client.UpdateItem(ctx, input)
 
 	return err
 }

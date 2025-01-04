@@ -17,13 +17,13 @@ import (
 // instance provisioning.
 func PublishProvisioningMetric(ctx context.Context) {
 
-	config, err := config.LoadDefaultConfig(ctx)
+	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		logging.LogError("Failed to load AWS config:", fmt.Errorf("%s", err))
 	}
 
 	// Initialise CloudWatch client
-	cloudWatchClient := cloudwatch.NewFromConfig(config)
+	cloudWatchClient := cloudwatch.NewFromConfig(cfg)
 
 	_, ok := cloudWatchClient.PutMetricData(context.TODO(), &cloudwatch.PutMetricDataInput{
 		Namespace: aws.String("EC2ProvisionMetrics"),

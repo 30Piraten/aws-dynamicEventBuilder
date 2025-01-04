@@ -26,6 +26,16 @@ resource "aws_dynamodb_table" "env_tracker_dynamo_db" {
     type = "S"
   }
 
+  attribute {
+    name = "status"
+    type = "S"
+  }
+
+  attribute {
+    name = "TTL"
+    type = "N"
+  }
+
   ttl {
     attribute_name = "TTL"
     enabled        = true
