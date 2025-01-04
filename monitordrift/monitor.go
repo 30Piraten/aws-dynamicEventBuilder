@@ -22,7 +22,7 @@ type ActiveInstance struct {
 	Status     string `dynamodbv:"status"`
 }
 
-func monitorDrift(ctx context.Context) error {
+func monitorDrift(ctx context.Context, environment string, tableType string) error {
 	config, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to load AWS config: %v", err)
@@ -48,7 +48,7 @@ func monitorDrift(ctx context.Context) error {
 		if !instanceExistsInEC2(runningInstances, activeInstance.InstanceID) {
 			logging.LogInfo(fmt.Sprintf("Instance %s (ProvisionID: %s) not found in EC2, marking as TERMINATED", activeInstance.InstanceID, activeInstance.ID))
 
-			if err := cleanupenv.MarkInstanceAsTerminated(ctx, dynamodbClient, activeInstance.ID); err != nil {
+			if err := cleanupenv.MarkInstanceAsTerminated(ctx, dynamodbClient, activeInstance.ID, environment, tableType); err != nil {
 				logging.LogError(fmt.Sprintf("Failed to update DynamoDB status for InstanceID: %s: %v", activeInstance.InstanceID, err), err)
 			}
 		}
