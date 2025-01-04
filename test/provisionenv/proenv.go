@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"log"
-
+	"github.com/30Piraten/aws-dynamicEventBuilder/logging"
+	"github.com/30Piraten/aws-dynamicEventBuilder/metrics"
+	"github.com/30Piraten/aws-dynamicEventBuilder/ssm"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -74,6 +75,9 @@ func HandleProvisionRequest(ctx context.Context, event events.APIGatewayProxyReq
 		return createErrorResponse(500, "Failed to launch EC2 instance: ", err)
 	}
 
+	// Publish provisioning metric after successful launch of EC2 instance
+	metrics.PublishProvisioningMetric(ctx)
+
 	// Store the state in DynamoDB
 	if err := storeState(ctx, StateEntry{
 		ID:          provisionID,
@@ -84,21 +88,25 @@ func HandleProvisionRequest(ctx context.Context, event events.APIGatewayProxyReq
 		CreatedAt:   time.Now(),
 		ExpiresAt:   time.Now().Add(time.Duration(req.TTL) * time.Hour),
 		TTL:         time.Now().Add(time.Duration(req.TTL) * time.Hour).Unix(),
-	}); err != nil {
+	}, req.Environment, "provision"); err != nil {
 		return createErrorResponse(500, "Failed to store state: ", err)
 	}
 
 	// TODO: Corellation logs
-	log.Printf(
-		"Provision Request: ProvisionID: %s, InstanceID: %s, Environment: %s, Region: %s", provisionID, instanceID, req.Environment, req.Region)
+	logging.LogInfo(fmt.Sprintf(
+		"Provision Request: ProvisionID: %s, InstanceID: %s, Environment: %s, Region: %s", provisionID, instanceID, req.Environment, req.Region))
 
 	return events.APIGatewayProxyResponse{
 		StatusCode: 200,
 		Body: fmt.Sprintf(`{
 		"success": true, "provision_id": "%s", "instance_id": "%s"}`, provisionID, instanceID),
 	}, nil
+
 }
 
+// lauchEC2Instance launches an EC2 instance using the provided EC2 client,
+// configuration, environment, TTL, and custom tags. It returns the instance ID
+// of the newly launched instance, or an error if the launch fails.
 func lauchEC2Instance(ctx context.Context, client *ec2.Client, config EC2Config, env string, ttl int64) (string, error) {
 
 	provisionID := uuid.New().String()
@@ -178,13 +186,16 @@ func createErrorResponse(statusCode int, message string, err error) (events.APIG
 // storeState stores the given StateEntry in DynamoDB. It uses the AWS default
 // configuration for the current context. The StateEntry is marshaled to a map
 // using the attributevalue package. The item is then put into the DynamoDB table.
-// The table name is currently hardcoded to "dev-dynamodb-table", which is a
-// security risk. The table name should be dynamic for each user / client.
-func storeState(ctx context.Context, entry StateEntry) error {
+func storeState(ctx context.Context, entry StateEntry, environment string, tableType string) error {
 	// Create a DynamoDB client
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to load AWS config: %s", err)
+	}
+
+	tableName, err := ssm.TableName(environment, tableType)
+	if err != nil {
+		return fmt.Errorf("failed to get table name: %w", err)
 	}
 
 	dynamoClient := dynamodb.NewFromConfig(cfg)
@@ -196,14 +207,8 @@ func storeState(ctx context.Context, entry StateEntry) error {
 	}
 
 	// Put the item into the DynamoDB table
-	// TODO: DynamoDB table name should be dynamic for each user / client
 	_, err = dynamoClient.PutItem(ctx, &dynamodb.PutItemInput{
-
-		// This is supposed to create a DynamoDB table
-		// for the client. The table name should be dynamic.
-		// then parse the name here instead of hardcoding it.
-		// This is a security risk.
-		TableName: aws.String("dev-dynamodb-table"),
+		TableName: aws.String(tableName),
 		Item:      item,
 	})
 	if err != nil {
@@ -215,17 +220,17 @@ func storeState(ctx context.Context, entry StateEntry) error {
 
 // storeStateWithRetries stores the given StateEntry in DynamoDB and retries up to maxEntries times
 // if it fails. If all retries fail, it returns an error.
-func storeStateWithRetries(ctx context.Context, entry StateEntry, maxEntries int) error {
+func storeStateWithRetries(ctx context.Context, entry StateEntry, maxEntries int, environment string, tableType string) error {
 
 	for i := 0; i < maxEntries; i++ {
-		err := storeState(ctx, entry)
+		err := storeState(ctx, entry, environment, tableType)
 		if err != nil {
-			log.Printf("Successfully stored state in DynamoDB for InstanceID: %s, provisionID: %s", entry.InstanceID, entry.ID)
+			logging.LogInfo(fmt.Sprintf("Successfully stored state in DynamoDB for InstanceID: %s, provisionID: %s", entry.InstanceID, entry.ID))
 
 			return nil
 		}
 
-		log.Printf("Failed to store state for ProvisionID: %s (attempt: %d/%d): %v", entry.ID, i+1, maxEntries, err)
+		logging.LogError(fmt.Sprintf("Failed to store state for ProvisionID: %s (attempt: %d/%d): %v", entry.ID, i+1, maxEntries, err), err)
 		time.Sleep(time.Duration(i+1) * time.Second)
 	}
 
